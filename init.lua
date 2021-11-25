@@ -20,9 +20,13 @@ end
 
 -------------------------------- Color Scheme ----------------------------------------
 
-cmd('colorscheme desert')                                    -- Load plugin manager
+if pcall( function() cmd('colorscheme ayu') end ) then
+  -- do nothing
+else
+  cmd('colorscheme desert')
+end
 
--------------------------------- Plugins ----------------------------------------
+-------------------------------- Plugins ---------------------------------------------
 local base_path = os.getenv('XDG_DATA_HOME')
 if not base_path then base_path = os.getenv('HOME') .. '/.local/share' end
 
@@ -40,6 +44,7 @@ paq {
   {'savq/paq-nvim', opt = true};                           -- Plugin manager
   {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'};  -- Tree-sitter manager
   {'neovim/nvim-lspconfig'};                               -- LSP Config
+  -- {'nvim-lua/lsp-status.nvim'};                            -- LSP status
   {'williamboman/nvim-lsp-installer'};                     -- LSP installer
   {'ap/vim-buftabline'};                                   -- Tab manager
 
@@ -48,12 +53,14 @@ paq {
   {'hrsh7th/cmp-buffer'};                                  -- Completion Buffer Source
   {'hrsh7th/cmp-vsnip'};                                   -- Completion Snip Source
   {'hrsh7th/vim-vsnip'};                                   -- Completion Snip Source
+
+  {'ayu-theme/ayu-vim'};                                   -- Color Scheme
+  {'NLKNguyen/papercolor-theme'};                          -- Color Scheme
 }
 
 -------------------------------- Options ------------------------------------
 local indent = 2
 
--- Global Options
 opt('o', 'mouse', 'nic')                              -- mouse is able to move cursor
 opt('o', 'hidden', true)                              -- Enable modified buffers in backgroundl
 opt('o', 'syntax', 'on')                              -- Syntax highlighting
@@ -129,7 +136,7 @@ cmp.setup({
   },
   experimental = {
     native_menu = true,
-    ghost_text = true,
+    -- ghost_text = true,
   }
 })
 
@@ -141,7 +148,12 @@ ts.setup {
   indent = {enable = true},
 }
 
--------------------------------- LSP Config and Install ------------------------
+-------------------------------- LSP Status --------------------------------------------
+
+-- local lsp_status = require('lsp-status')
+-- lsp_status.register_progress()
+
+-------------------------------- LSP Config and Install --------------------------------
 
 local common_on_attach = function(client, bufnr)
   -- Mappings.
@@ -169,6 +181,9 @@ local common_on_attach = function(client, bufnr)
   elseif client.resolved_capabilities.document_range_formatting then
     buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
   end
+
+--   lsp_status.on_attach(client)
+
 end
 
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
@@ -195,4 +210,13 @@ lsp_installer.on_server_ready(function(server)
   vim.cmd [[ do User LspAttachBuffers ]]
 end)
 
+-------------------------------- Post LSP Initalization --------------------------------
 
+-- local function lsp_status_start()
+--   if #vim.lsp.buf_get_clients() > 0 then
+--     return lsp_status.status()
+--   end
+--   return ''
+-- end
+
+-- lsp_status.status()
