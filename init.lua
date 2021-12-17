@@ -30,7 +30,7 @@ end
 local base_path = os.getenv('XDG_DATA_HOME')
 if not base_path then base_path = os.getenv('HOME') .. '/.local/share' end
 
-local install_path = base_path .. "/site/pack/paqs/start/paq-nvim"
+local install_path = base_path .. "/nvim/site/pack/paqs/start/paq-nvim"
 
 if fn.empty(fn.glob(install_path)) > 0 then
   fn.system({'git', 'clone', '--depth=1', 'https://github.com/savq/paq-nvim.git', install_path})
@@ -59,6 +59,7 @@ paq {
 -------------------------------- Options ------------------------------------
 local indent = 2
 
+-- Global Options
 opt('o', 'mouse', 'nic')                              -- mouse is able to move cursor
 opt('o', 'hidden', true)                              -- Enable modified buffers in backgroundl
 opt('o', 'syntax', 'on')                              -- Syntax highlighting
@@ -77,6 +78,7 @@ opt('o', 'backspace','indent,start,eol')              -- Backspace behaviour
 opt('o', 'wildmode', 'longest,list,full')             -- Command-line completion mode
 opt('o', 'clipboard','unnamedplus')                   -- Clipboard
 opt('o', 'completeopt', 'menuone,noinsert,noselect')  -- Completion options (for deoplete)
+opt('o', 'inccommand', 'nosplit')                     -- Shows the effects of the cmd incrementally
 
 -- Buffer-local Options
 opt('b', 'expandtab', true)                           -- Tabs expanded to spaces
