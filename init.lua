@@ -36,10 +36,8 @@ if fn.empty(fn.glob(install_path)) > 0 then
   fn.system({'git', 'clone', '--depth=1', 'https://github.com/savq/paq-nvim.git', install_path})
 end
 
-cmd('packadd paq-nvim')                                    -- Load plugin manager
-
 -- Plugins
-local paq = require('paq-nvim')
+local paq = require('paq')
 paq {
   {'savq/paq-nvim', opt = true};                           -- Plugin manager
   {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'};  -- Tree-sitter manager
