@@ -18,6 +18,19 @@ local function map(mode, lhs, rhs, opts)
   vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
 
+local function dump(var)
+   if type(var) == 'table' then
+      local str = '{ '
+      for key,val in pairs(var) do
+         if type(key) ~= 'number' then key = '"'..key..'"' end
+         str = str .. '['..key..'] = ' .. dump(val) .. ','
+      end
+      return str .. '} '
+   else
+      return tostring(var)
+   end
+end
+
 -------------------------------- Color Scheme ----------------------------------------
 
 if pcall( function() cmd('colorscheme ayu') end ) then
@@ -40,18 +53,23 @@ end
 local paq = require('paq')
 paq {
   {'savq/paq-nvim', opt = true};                           -- Plugin manager
+
+  -- Language & Syntax Plugins
   {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'};  -- Tree-sitter manager
   {'neovim/nvim-lspconfig'};                               -- LSP Config
-  -- {'nvim-lua/lsp-status.nvim'};                            -- LSP status
   {'williamboman/nvim-lsp-installer'};                     -- LSP installer
-  {'ap/vim-buftabline'};                                   -- Tab manager
 
+  -- UI Plugins
+  {'ap/vim-buftabline'};                                   -- Tab manager
+  {'nvim-lualine/lualine.nvim'};                           -- Status line
+
+  -- Completion Plugins
   {'hrsh7th/nvim-cmp'};                                    -- Completion Core
   {'hrsh7th/cmp-nvim-lsp'};                                -- Completion LSP Source
   {'hrsh7th/cmp-buffer'};                                  -- Completion Buffer Source
   {'hrsh7th/cmp-vsnip'};                                   -- Completion Snip Source
-  {'hrsh7th/vim-vsnip'};                                   -- Completion Snip Source
 
+  -- Color Schemes
   {'ayu-theme/ayu-vim'};                                   -- Color Scheme
   {'NLKNguyen/papercolor-theme'};                          -- Color Scheme
 }
@@ -148,10 +166,36 @@ ts.setup {
   indent = {enable = true},
 }
 
--------------------------------- LSP Status --------------------------------------------
+-------------------------------- Status Line -------------------------------------------
 
--- local lsp_status = require('lsp-status')
--- lsp_status.register_progress()
+require('lualine').setup {
+  options = {
+    icons_enabled = false,
+    theme = 'auto',
+    component_separators = { left = '', right = ''},
+    section_separators = { left = '', right = ''},
+    disabled_filetypes = {},
+    always_divide_middle = true,
+  },
+  sections = {
+    lualine_a = {'mode'},
+    lualine_b = {'branch','diagnostics'},
+    lualine_c = {'filename', "require('nvim-treesitter').statusline(200)"},
+    lualine_x = {'encoding', 'fileformat', 'filetype'},
+    lualine_y = {'progress'},
+    lualine_z = {'location'}
+  },
+  inactive_sections = {
+    lualine_a = {},
+    lualine_b = {},
+    lualine_c = {'filename'},
+    lualine_x = {'location'},
+    lualine_y = {},
+    lualine_z = {}
+  },
+  tabline = {},
+  extensions = {}
+}
 
 -------------------------------- LSP Config and Install --------------------------------
 
@@ -170,7 +214,7 @@ local common_on_attach = function(client, bufnr)
   buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
   buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
   buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-  buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
+  buf_set_keymap('n', '<space>e', '<cmd>lua vim.diagnostic.get()<CR>', opts)
   buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
   buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
   buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
@@ -181,8 +225,6 @@ local common_on_attach = function(client, bufnr)
   elseif client.resolved_capabilities.document_range_formatting then
     buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
   end
-
---   lsp_status.on_attach(client)
 
 end
 
@@ -210,13 +252,3 @@ lsp_installer.on_server_ready(function(server)
   vim.cmd [[ do User LspAttachBuffers ]]
 end)
 
--------------------------------- Post LSP Initalization --------------------------------
-
--- local function lsp_status_start()
---   if #vim.lsp.buf_get_clients() > 0 then
---     return lsp_status.status()
---   end
---   return ''
--- end
-
--- lsp_status.status()
