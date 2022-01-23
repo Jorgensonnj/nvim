@@ -7,13 +7,17 @@ local g = vim.g                                       -- a table to access globa
 
 local scopes = {o = vim.o, b = vim.bo, w = vim.wo}    -- o->global, b->buffer-local, w->window-local
 
+local silent = {silent = true}
+local noremap = {noremap = true}
+local silent_noremap = {silent = true, noremap = true}
+
 local function opt(scope, key, value)
   scopes[scope][key] = value
   if scope ~= 'o' then scopes['o'][key] = value end
 end
 
 local function map(mode, lhs, rhs, opts)
-  local options = {noremap = true}
+  local options = noremap
   if opts then options = vim.tbl_extend('force', options, opts) end
   vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
@@ -119,17 +123,23 @@ g.buftabline_show = 1                                 -- Tabs are shown
 g.buftabline_numbers = 2                              -- Tabs now numbers
 
 -------------------------------- Mappings ------------------------------------------
-
 -- General
-map('n', 'n', 'nzzzv', {silent = true})                  -- Next item in search is centered, folds are opened
-map('n', 'N', 'Nzzzv', {silent = true})                  -- Previous item in search is centered, folds are opened
+map('n', 'n', 'nzzzv', silent)                  -- Next item in search is centered, folds are opened
+map('n', 'N', 'Nzzzv', silent)                  -- Previous item in search is centered, folds are opened
 --map('v', '<D-x>', '"+x', {silent = false})             -- Cut
 --map('v', '<D-c>', '"+y', {silent = false})             -- Copy
 --map('n', '<D-v>', '"+P', {silent = false})             -- Paste
 
 -- Buftabline
-map('n', '<TAB>', ':bnext<CR>', {silent = true})      -- Next Tab
-map('n', '<S-TAB>', ':bprev<CR>', {silent = true})    -- Previous Tab
+map('n', '<TAB>', ':bnext<CR>', silent)         -- Next Tab
+map('n', '<S-TAB>', ':bprev<CR>', silent)       -- Previous Tab
+
+-- cmp
+map('n', '<space>e', '<cmd>lua vim.diagnostic.open_float()<CR>', silent_noremap)
+map('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<CR>', silent_noremap)
+map('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<CR>', silent_noremap)
+map('n', '<space>q', '<cmd>lua vim.diagnostic.setloclist()<CR>', silent_noremap)
+map('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', silent_noremap)
 
 -------------------------------- Completion Configuration -------------------------
 
@@ -174,58 +184,41 @@ require('lualine').setup {
     theme = 'auto',
     component_separators = { left = '', right = ''},
     section_separators = { left = '', right = ''},
-    disabled_filetypes = {},
     always_divide_middle = true,
   },
   sections = {
     lualine_a = {'mode'},
-    lualine_b = {'branch','diagnostics'},
-    lualine_c = {'filename', "require('nvim-treesitter').statusline(200)"},
-    lualine_x = {'encoding', 'fileformat', 'filetype'},
+    lualine_b = {'filename', 'diagnostics'},
+    lualine_c = {"require('nvim-treesitter').statusline(200)"},
+    lualine_x = {'encoding', 'filetype'},
     lualine_y = {'progress'},
     lualine_z = {'location'}
   },
   inactive_sections = {
-    lualine_a = {},
-    lualine_b = {},
     lualine_c = {'filename'},
     lualine_x = {'location'},
-    lualine_y = {},
-    lualine_z = {}
-  },
-  tabline = {},
-  extensions = {}
+  }
 }
 
 -------------------------------- LSP Config and Install --------------------------------
 
-local common_on_attach = function(client, bufnr)
-  -- Mappings.
-  local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-  local opts = { noremap=true, silent=true }
-  buf_set_keymap('n', 'gD', '<Cmd>lua vim.lsp.buf.declaration()<CR>', opts)
-  buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', opts)
-  buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', opts)
-  buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-  buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
-  buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
-  buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
-  buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
-  buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
-  buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-  buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-  buf_set_keymap('n', '<space>e', '<cmd>lua vim.diagnostic.get()<CR>', opts)
-  buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
-  buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
-  buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
 
-  -- Set some keybinds conditional on server capabilities
-  if client.resolved_capabilities.document_formatting then
-    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
-  elseif client.resolved_capabilities.document_range_formatting then
-    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
-  end
+local common_on_attach = function(_, bufnr)
+  vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 
+  -- lsp mappings
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', silent_noremap)
+  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', silent_noremap)
 end
 
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
