@@ -160,10 +160,12 @@ cmp.setup({
   sources = {
     { name = 'nvim_lsp' },
     { name = 'vsnip' },
-    { name = 'buffer', keyword_length = 5 },
+    { name = 'buffer', keyword_length = 4 },
+  },
+  view = {
+    entries = 'native',
   },
   experimental = {
-    native_menu = true,
     -- ghost_text = true,
   }
 })
@@ -182,13 +184,13 @@ require('lualine').setup {
   options = {
     icons_enabled = false,
     theme = 'auto',
-    component_separators = { left = '', right = ''},
-    section_separators = { left = '', right = ''},
+    component_separators = { left = '', right = '' },
+    section_separators = { left = '', right = '' },
     always_divide_middle = true,
   },
   sections = {
     lualine_a = {'mode'},
-    lualine_b = {'filename', 'diagnostics'},
+    lualine_b = { { 'filename', path = 1 }, 'diagnostics'},
     lualine_c = {"require('nvim-treesitter').statusline(200)"},
     lualine_x = {'encoding', 'filetype'},
     lualine_y = {'progress'},
