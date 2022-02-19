@@ -66,6 +66,7 @@ paq {
   -- UI Plugins
   {'ap/vim-buftabline'};                                   -- Tab manager
   {'nvim-lualine/lualine.nvim'};                           -- Status line
+  {'norcalli/nvim-colorizer.lua'};                         -- RGB and hex background colorizer
 
   -- Completion Plugins
   {'hrsh7th/nvim-cmp'};                                    -- Completion Core
@@ -83,7 +84,7 @@ local indent = 2
 
 -- Global Options
 opt('o', 'mouse', 'nic')                              -- mouse is able to move cursor
-opt('o', 'hidden', true)                              -- Enable modified buffers in backgroundl
+opt('o', 'hidden', true)                              -- Enable modified buffers in background
 opt('o', 'syntax', 'on')                              -- Syntax highlighting
 opt('o', 'scrolloff', 4)                              -- Lines of context
 opt('o', 'smartcase', true)                           -- Don't ignore case with capitals
@@ -201,6 +202,10 @@ require('lualine').setup {
     lualine_x = {'location'},
   }
 }
+
+-------------------------------- Colorizer Setup ---------------------------------------
+
+require('colorizer').setup()
 
 -------------------------------- LSP Config and Install --------------------------------
 
