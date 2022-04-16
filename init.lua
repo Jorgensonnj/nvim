@@ -70,6 +70,7 @@ paq {
 
   -- Completion Plugins
   {'hrsh7th/nvim-cmp'};                                    -- Completion Core
+  {'hrsh7th/cmp-path'};                                    -- Completion Path Source
   {'hrsh7th/cmp-nvim-lsp'};                                -- Completion LSP Source
   {'hrsh7th/cmp-buffer'};                                  -- Completion Buffer Source
   {'hrsh7th/cmp-vsnip'};                                   -- Completion Snip Source
@@ -146,20 +147,50 @@ map('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', silent_noremap)
 
 local cmp = require("cmp")
 
+-- helper for key mapping
+local has_words_before = function()
+  local line, col = table.unpack(vim.api.nvim_win_get_cursor(0))
+  return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+end
+
+-- helper for key mapping
+local feedkey = function(key, mode)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
+end
+
 cmp.setup({
   snippet = {
     expand = function(args)
       fn["vsnip#anonymous"](args.body)
     end,
   },
-  mapping = {
-    ['<Tab>'] = function (fallback) if cmp.visible() then cmp.select_next_item() else fallback() end end,
-    ['<S-Tab>'] = function (fallback) if cmp.visible() then cmp.select_prev_item() else fallback() end end,
-    ['<CR>'] = cmp.mapping.confirm { behavior = cmp.ConfirmBehavior.Replace, select = true },
-    ['<S-CR>'] = cmp.mapping.confirm { behavior = cmp.ConfirmBehavior.Insert, select = true },
-  },
+  mapping = cmp.mapping.preset.insert({
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif vim.fn["vsnip#available"](1) then
+        feedkey("<Plug>(vsnip-expand-or-jump)", "")
+      elseif has_words_before() then
+        cmp.complete()
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif vim.fn["vsnip#jumpable"](-1) then
+        feedkey("<Plug>(vsnip-jump-prev)", "")
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+    ['<CR>'] = cmp.mapping.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = true }),
+    ['<S-CR>'] = cmp.mapping.confirm({ behavior = cmp.ConfirmBehavior.Insert, select = true }),
+  }),
   sources = {
     { name = 'nvim_lsp' },
+    { name = 'path' },
     { name = 'vsnip' },
     { name = 'buffer', keyword_length = 4 },
   },
