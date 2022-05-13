@@ -44,10 +44,10 @@ else
 end
 
 -------------------------------- Plugins ---------------------------------------------
-local base_path = os.getenv('XDG_DATA_HOME')
-if not base_path then base_path = os.getenv('HOME') .. '/.local/share' end
+local data_base_path = os.getenv('XDG_DATA_HOME')
+if not data_base_path then data_base_path = os.getenv('HOME') .. '/.local/share' end
 
-local install_path = base_path .. "/nvim/site/pack/paqs/start/paq-nvim"
+local install_path = data_base_path .. "/nvim/site/pack/paqs/start/paq-nvim"
 
 if fn.empty(fn.glob(install_path)) > 0 then
   fn.system({'git', 'clone', '--depth=1', 'https://github.com/savq/paq-nvim.git', install_path})
@@ -70,10 +70,14 @@ paq {
 
   -- Completion Plugins
   {'hrsh7th/nvim-cmp'};                                    -- Completion Core
-  {'hrsh7th/cmp-path'};                                    -- Completion Path Source
+  -- Completion Sources
   {'hrsh7th/cmp-nvim-lsp'};                                -- Completion LSP Source
   {'hrsh7th/cmp-buffer'};                                  -- Completion Buffer Source
-  {'hrsh7th/cmp-vsnip'};                                   -- Completion Snip Source
+  {'hrsh7th/cmp-path'};                                    -- Completion Path Source
+  {'saadparwaiz1/cmp_luasnip'};                            -- Completion Snip Source
+
+  -- Snippet Engine
+  {'L3MON4D3/LuaSnip'};                                    -- Completion Snip Source
 
   -- Color Schemes
   {'ayu-theme/ayu-vim'};                                   -- Color Scheme
@@ -146,30 +150,32 @@ map('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', silent_noremap)
 -------------------------------- Completion Configuration -------------------------
 
 local cmp = require("cmp")
+local luasnip = require('luasnip')
 
--- helper for key mapping
 local has_words_before = function()
   local line, col = table.unpack(vim.api.nvim_win_get_cursor(0))
   return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
 end
 
--- helper for key mapping
-local feedkey = function(key, mode)
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
-end
+local config_base_path = os.getenv('XDG_CONFIG_HOME')
+if not config_base_path then config_base_path = os.getenv('HOME') .. '/.config' end
+
+local snippet_path = config_base_path .. "/snippets"
+
+require('luasnip.loaders.from_vscode').lazy_load({ paths = { snippet_path } })
 
 cmp.setup({
   snippet = {
     expand = function(args)
-      fn["vsnip#anonymous"](args.body)
+      luasnip.lsp_expand(args.body)
     end,
   },
-  mapping = cmp.mapping.preset.insert({
+  mapping = {
     ['<Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      elseif vim.fn["vsnip#available"](1) then
-        feedkey("<Plug>(vsnip-expand-or-jump)", "")
+      elseif luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
       elseif has_words_before() then
         cmp.complete()
       else
@@ -179,19 +185,19 @@ cmp.setup({
     ['<S-Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
-      elseif vim.fn["vsnip#jumpable"](-1) then
-        feedkey("<Plug>(vsnip-jump-prev)", "")
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
       else
         fallback()
       end
     end, { "i", "s" }),
     ['<CR>'] = cmp.mapping.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = true }),
     ['<S-CR>'] = cmp.mapping.confirm({ behavior = cmp.ConfirmBehavior.Insert, select = true }),
-  }),
+  },
   sources = {
     { name = 'nvim_lsp' },
     { name = 'path' },
-    { name = 'vsnip' },
+    { name = 'luasnip' },
     { name = 'buffer', keyword_length = 4 },
   },
   view = {
@@ -239,7 +245,6 @@ require('lualine').setup {
 require('colorizer').setup()
 
 -------------------------------- LSP Config and Install --------------------------------
-
 
 local common_on_attach = function(_, bufnr)
   vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
