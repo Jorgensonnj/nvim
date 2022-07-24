@@ -22,18 +22,18 @@ local function map(mode, lhs, rhs, opts)
   vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
 
-local function dump(var)
-   if type(var) == 'table' then
-      local str = '{ '
-      for key,val in pairs(var) do
-         if type(key) ~= 'number' then key = '"'..key..'"' end
-         str = str .. '['..key..'] = ' .. dump(val) .. ','
-      end
-      return str .. '} '
-   else
-      return tostring(var)
-   end
-end
+--local function dump(var)
+--   if type(var) == 'table' then
+--      local str = '{ '
+--      for key,val in pairs(var) do
+--         if type(key) ~= 'number' then key = '"'..key..'"' end
+--         str = str .. '['..key..'] = ' .. dump(val) .. ','
+--      end
+--      return str .. '} '
+--   else
+--      return tostring(var)
+--   end
+--end
 
 -------------------------------- Color Scheme ----------------------------------------
 
@@ -59,7 +59,7 @@ paq {
   {'savq/paq-nvim', opt = true};                           -- Plugin manager
 
   -- Language & Syntax Plugins
-  {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'};  -- Tree-sitter manager
+  {'nvim-treesitter/nvim-treesitter'};                     -- Tree-sitter manager
   {'neovim/nvim-lspconfig'};                               -- LSP Config
   {'williamboman/nvim-lsp-installer'};                     -- LSP installer
 
@@ -153,16 +153,16 @@ local cmp = require("cmp")
 local luasnip = require('luasnip')
 
 local has_words_before = function()
-  local line, col = table.unpack(vim.api.nvim_win_get_cursor(0))
+  local line, col = unpack(vim.api.nvim_win_get_cursor(0))
   return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
 end
 
-local config_base_path = os.getenv('XDG_CONFIG_HOME')
-if not config_base_path then config_base_path = os.getenv('HOME') .. '/.config' end
+--local config_base_path = os.getenv('XDG_CONFIG_HOME')
+--if not config_base_path then config_base_path = os.getenv('HOME') .. '/.config' end
 
-local snippet_path = config_base_path .. "/snippets"
+--local snippet_path = config_base_path .. "/nvim/snippets"
 
-require('luasnip.loaders.from_vscode').lazy_load({ paths = { snippet_path } })
+--require('luasnip.loaders.from_vscode').lazy_load({ paths = { snippet_path } })
 
 cmp.setup({
   snippet = {
@@ -206,6 +206,25 @@ cmp.setup({
   experimental = {
     -- ghost_text = true,
   }
+})
+
+-------------------------------- Snippet ------------------------------------
+
+local s = luasnip.snippet
+local t = luasnip.text_node
+local i = luasnip.insert_node
+
+luasnip.add_snippets("all", {
+  s("warn", {
+    t("warn \"----------"),
+    i(1, "var"),
+    t("----------\" OHPA::Shared::Dumper::Dumper "),
+    i(2, "var"),
+    i(0),
+    t(";"),
+  }, {
+    key = "all",
+  })
 })
 
 -------------------------------- Tree-sitter Config ------------------------------------
@@ -277,6 +296,9 @@ lsp_installer.on_server_ready(function(server)
   if server.name == "sumneko_lua" then
     opts.settings = {
       Lua = {
+        runtime = {
+          version = 'LuaJIT'
+        },
         diagnostics = {
           globals = { 'vim' }
         }
