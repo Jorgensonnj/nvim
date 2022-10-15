@@ -219,7 +219,7 @@ luasnip.add_snippets("all", {
   s("warn", {
     t("warn \"----------"),
     i(1, "var"),
-    t("----------\" OHPA::Shared::Dumper::Dumper "),
+    t("----------\" . OHPA::Shared::Dumper::Dumper "),
     i(2, "var"),
     i(0),
     t(";"),
@@ -284,7 +284,7 @@ local common_on_attach = function(_, bufnr)
   vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', silent_noremap)
 end
 
-local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- Installed servers will have defined configurations attached to them
 local lsp_installer = require("nvim-lsp-installer")
