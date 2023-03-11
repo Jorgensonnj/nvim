@@ -22,18 +22,18 @@ local function map(mode, lhs, rhs, opts)
   vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
 
---local function dump(var)
---   if type(var) == 'table' then
---      local str = '{ '
---      for key,val in pairs(var) do
---         if type(key) ~= 'number' then key = '"'..key..'"' end
---         str = str .. '['..key..'] = ' .. dump(val) .. ','
---      end
---      return str .. '} '
---   else
---      return tostring(var)
---   end
---end
+-- local function dump(var)
+--    if type(var) == 'table' then
+--       local str = '{ '
+--       for key,val in pairs(var) do
+--          if type(key) ~= 'number' then key = '"'..key..'"' end
+--          str = str .. '['..key..'] = ' .. dump(val) .. ','
+--       end
+--       return str .. '} '
+--    else
+--       return tostring(var)
+--    end
+-- end
 
 -------------------------------- Color Scheme ----------------------------------------
 
@@ -56,32 +56,36 @@ end
 -- Plugins
 local paq = require('paq')
 paq {
-  {'savq/paq-nvim', opt = true};                           -- Plugin manager
+  {'savq/paq-nvim', opt = true};                      -- Plugin manager
 
   -- Language & Syntax Plugins
-  {'nvim-treesitter/nvim-treesitter'};                     -- Tree-sitter manager
-  {'neovim/nvim-lspconfig'};                               -- LSP Config
-  {'williamboman/nvim-lsp-installer'};                     -- LSP installer
+  {'nvim-treesitter/nvim-treesitter'};                -- Tree-sitter manager
+  {'neovim/nvim-lspconfig'};                          -- LSP Config
+  {'williamboman/mason.nvim'};                        -- package installer
+  {'williamboman/mason-lspconfig'};                   -- LSP installer
 
   -- UI Plugins
-  {'ap/vim-buftabline'};                                   -- Tab manager
-  {'nvim-lualine/lualine.nvim'};                           -- Status line
-  {'norcalli/nvim-colorizer.lua'};                         -- RGB and hex background colorizer
+  {'ap/vim-buftabline'};                              -- Tab manager
+  {'nvim-lualine/lualine.nvim'};                      -- Status line
+  {'norcalli/nvim-colorizer.lua'};                    -- RGB and hex background colorizer
 
   -- Completion Plugins
-  {'hrsh7th/nvim-cmp'};                                    -- Completion Core
+  {'hrsh7th/nvim-cmp'};                               -- Completion Core
   -- Completion Sources
-  {'hrsh7th/cmp-nvim-lsp'};                                -- Completion LSP Source
-  {'hrsh7th/cmp-buffer'};                                  -- Completion Buffer Source
-  {'hrsh7th/cmp-path'};                                    -- Completion Path Source
-  {'saadparwaiz1/cmp_luasnip'};                            -- Completion Snip Source
+  {'hrsh7th/cmp-nvim-lsp'};                           -- Completion LSP Source
+  {'hrsh7th/cmp-buffer'};                             -- Completion Buffer Source
+  {'hrsh7th/cmp-path'};                               -- Completion Path Source
+  {'saadparwaiz1/cmp_luasnip'};                       -- Completion Snip Source
 
   -- Snippet Engine
-  {'L3MON4D3/LuaSnip'};                                    -- Completion Snip Source
+  {'L3MON4D3/LuaSnip'};                               -- Completion Snip Source
 
   -- Color Schemes
-  {'ayu-theme/ayu-vim'};                                   -- Color Scheme
-  {'NLKNguyen/papercolor-theme'};                          -- Color Scheme
+  {'ayu-theme/ayu-vim'};                              -- Color Scheme
+  {'NLKNguyen/papercolor-theme'};                     -- Color Scheme
+
+  {'nvim-lua/plenary.nvim'};                          -- Color Scheme
+  {'nvim-telescope/telescope.nvim'};                  -- Color Scheme
 }
 
 -------------------------------- Options ------------------------------------
@@ -158,12 +162,8 @@ local has_words_before = function()
   return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
 end
 
---local config_base_path = os.getenv('XDG_CONFIG_HOME')
---if not config_base_path then config_base_path = os.getenv('HOME') .. '/.config' end
-
---local snippet_path = config_base_path .. "/nvim/snippets"
-
---require('luasnip.loaders.from_vscode').lazy_load({ paths = { snippet_path } })
+local config_base_path = os.getenv('XDG_CONFIG_HOME')
+if not config_base_path then config_base_path = os.getenv('HOME') .. '/.config' end
 
 cmp.setup({
   snippet = {
@@ -219,10 +219,7 @@ luasnip.add_snippets("all", {
   s("warn", {
     t("warn \"----------"),
     i(1, "var"),
-    t("----------\" . OHPA::Shared::Dumper::Dumper "),
-    i(2, "var"),
-    i(0),
-    t(";"),
+    t("----------\" . OHPA::Shared::Dumper::Dumper var;"),
   }, {
     key = "all",
   })
@@ -266,48 +263,53 @@ require('colorizer').setup()
 
 -------------------------------- LSP Config and Install --------------------------------
 
-local common_on_attach = function(_, bufnr)
+local on_attach = function(_, bufnr)
   vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 
-  -- lsp mappings
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', silent_noremap)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', silent_noremap)
+  -- Mappings.
+  local bufopts = { noremap=true, silent=true, buffer=bufnr }
+  vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
+  vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
+  vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
+  vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
+  vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, bufopts)
+  vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, bufopts)
+  vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, bufopts)
+  vim.keymap.set('n', '<space>wl', function() print(vim.inspect(vim.lsp.buf.list_workspace_folders())) end, bufopts)
+  vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, bufopts)
+  vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, bufopts)
+  vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
+  vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
+  vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format { async = true } end, bufopts)
 end
 
 local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- Installed servers will have defined configurations attached to them
-local lsp_installer = require("nvim-lsp-installer")
-lsp_installer.on_server_ready(function(server)
+local lsp_config = require("lspconfig")
+local servers = {'lua_ls'}
+
+for _, lsp in ipairs(servers) do
   local opts = {
-    on_attach = common_on_attach,
+    on_attach = on_attach,
     capabilities = capabilities
   }
 
-  if server.name == "sumneko_lua" then
+  if lsp == "lua_ls" then
     opts.settings = {
       Lua = {
-        runtime = {
-          version = 'LuaJIT'
-        },
-        diagnostics = {
-          globals = { 'vim' }
-        }
+        runtime = { version = 'LuaJIT' },
+        diagnostics = { globals = { 'vim' } }
       }
     }
   end
 
-  server:setup(opts)
-  vim.cmd [[ do User LspAttachBuffers ]]
-end)
+  lsp_config[lsp].setup( opts )
+end
 
+-------------------------------- mason setup --------------------------------
+
+local mason = require("mason")
+mason.setup()
+local mason_lspconfig = require("mason-lspconfig")
+mason_lspconfig.setup { ensure_installed = { "lua_ls" } }
