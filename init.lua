@@ -165,6 +165,15 @@ lazy.setup({
             settings = { Lua = { diagnostics = { globals = { 'vim' } } } }
           }
         end,
+        ['rust_analyzer'] = function ()
+          require("lspconfig").rust_analyzer.setup {
+            server = {
+              root_dir = function(startpath)
+                require("lspconfig").util.root_pattern("Cargo.toml", "rust-project.json")(startpath)
+              end,
+            }
+          }
+        end,
       })
     end,
   },
@@ -250,6 +259,7 @@ lazy.setup({
 -- General
 map('n', 'n', 'nzzzv', silent)                  -- Next item in search is centered, folds are opened
 map('n', 'N', 'Nzzzv', silent)                  -- Previous item in search is centered, folds are opened
+map('n', 'U', '<C-r>', silent)                  -- Previous item in search is centered, folds are opened
 -- map('v', '<D-x>', '"+x', {silent = false})      -- Cut
 -- map('v', '<D-c>', '"+y', {silent = false})      -- Copy
 -- map('n', '<D-v>', '"+P', {silent = false})      -- Paste
