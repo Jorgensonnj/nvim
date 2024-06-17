@@ -116,6 +116,11 @@ lazy.setup({
         require('colorizer').setup()
       end,
     },
+    {
+      'ellisonleao/glow.nvim',
+      config = true,
+      cmd = "Glow"
+    },
     -- Language & Syntax Plugins
     {
       'nvim-treesitter/nvim-treesitter', -- Tree-sitter manager
