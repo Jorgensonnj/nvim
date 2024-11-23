@@ -14,6 +14,7 @@
 --    end
 -- end
 
+require("config.variables")
 require("config.options")
 require("config.keymap")
 require("config.package_manager")
