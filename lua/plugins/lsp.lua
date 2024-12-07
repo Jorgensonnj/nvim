@@ -1,88 +1,92 @@
 return {
   {
-    'williamboman/mason.nvim',
-    config = function()
-      require("mason").setup()
-    end,
-  },
-  {
-    'williamboman/mason-lspconfig.nvim',
-    dependencies = {
-      'williamboman/mason.nvim',
-    },
-    config = function()
-      require("mason-lspconfig").setup({
-        automatic_installation = true,
-      })
-    end,
-  },
-  {
     'neovim/nvim-lspconfig',
     dependencies = {
+      {'williamboman/mason.nvim', config = true},
       'williamboman/mason-lspconfig.nvim',
       'hrsh7th/cmp-nvim-lsp',
     },
     config = function()
-      local lspconfig = require('lspconfig')
-      local mason_lspconfig = require('mason-lspconfig')
-      local capabilities = require("cmp_nvim_lsp").default_capabilities()
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('plugin-lsp-attach', { clear = true }),
+        callback = function(event)
+          local map = function(keys, func, desc, mode)
+            mode = mode or 'n'
+            vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
+          end
+          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
+          map('gd', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
-      vim.lsp.set_log_level 'trace'
-      require('vim.lsp.log').set_format_func(vim.inspect)
-      local on_attach = function(_, bufnr)
-        local function buf_set_option(...)
-          vim.api.nvim_buf_set_option(bufnr, ...)
-        end
+          -- two autocommands used to highlight references
+          -- when cursor is moved, the highlights will be cleared
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
+            local highlight_augroup = vim.api.nvim_create_augroup('plugin-lsp-highlight', { clear = false })
 
-        buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+            vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+              buffer = event.buf,
+              group = highlight_augroup,
+              callback = vim.lsp.buf.document_highlight,
+            })
 
-        -- Mappings.
-        local opts = { buffer = bufnr, noremap = true, silent = true }
-        vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
-        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-        vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-        vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-        vim.keymap.set('n', '<Leader>wa', vim.lsp.buf.add_workspace_folder, opts)
-        vim.keymap.set('n', '<Leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
-        vim.keymap.set('n', '<Leader>wl', function()
-          print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-        end, opts)
-        vim.keymap.set('n', '<Leader>D', vim.lsp.buf.type_definition, opts)
-        vim.keymap.set('n', '<Leader>rn', vim.lsp.buf.rename, opts)
-        vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-        vim.keymap.set('n', '<Leader>e', vim.diagnostic.open_float, opts)
-        vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
-        vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
-        vim.keymap.set('n', '<Leader>q', vim.diagnostic.setloclist, opts)
-      end
+            vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+              buffer = event.buf,
+              group = highlight_augroup,
+              callback = vim.lsp.buf.clear_references,
+            })
 
-      mason_lspconfig.setup()
-      mason_lspconfig.setup_handlers({
-        function(server_name)
-          lspconfig[server_name].setup({
-            on_attach = on_attach,
-            capabilities = capabilities
-          })
-        end,
-        ['lua_ls'] = function()
-          lspconfig.lua_ls.setup {
-            on_attach = on_attach,
-            capabilities = capabilities,
-            settings = { Lua = { diagnostics = { globals = { 'vim' } } } }
-          }
-        end,
-        ['rust_analyzer'] = function()
-          lspconfig.rust_analyzer.setup {
-            on_attach = on_attach,
-            capabilities = capabilities,
-            server = {
-              root_dir = function(startpath)
-                lspconfig.util.root_pattern("Cargo.toml", "rust-project.json")(startpath)
+            vim.api.nvim_create_autocmd('LspDetach', {
+              group = vim.api.nvim_create_augroup('plugin-lsp-detach', { clear = true }),
+              callback = function(event2)
+                vim.lsp.buf.clear_references()
+                vim.api.nvim_clear_autocmds { group = 'plugin-lsp-highlight', buffer = event2.buf }
               end,
+            })
+          end
+
+          -- keymap to toggle inlay hints
+          if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+            map('<leader>th', function()
+              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
+            end, '[T]oggle Inlay [H]ints')
+          end
+        end,
+      })
+
+      local servers = {
+        rust_analyzer = {
+          server = {
+            root_dir = function(startpath)
+              require('lspconfig').util.root_pattern("Cargo.toml", "rust-project.json")(startpath)
+            end,
+          }
+        },
+        lua_ls = {
+          settings = {
+            Lua = {
+              diagnostics = {
+                globals = { 'vim' },
+                disable = { 'missing-fields' }
+              }
             }
           }
-        end,
+        }
+      }
+
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+
+      require('mason').setup()
+
+      require('mason-lspconfig').setup({
+        handlers = {
+          function(server_name)
+            local server = servers[server_name] or {}
+            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+            require('lspconfig')[server_name].setup(server)
+          end,
+        }
       })
     end,
   },
