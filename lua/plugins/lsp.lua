@@ -10,13 +10,20 @@ return {
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('plugin-lsp-attach', { clear = true }),
         callback = function(event)
+
           local map = function(keys, func, desc, mode)
             mode = mode or 'n'
             vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
-          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
-          map('gd', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+
+          map('<leader>rn', vim.lsp.buf.rename, '[r]e[n]ame')                          -- rename all instances of symbol
+          map('<leader>ca', vim.lsp.buf.code_action, '[c]ode [a]ction', { 'n', 'x' })  -- code actions
+          map('gd', vim.lsp.buf.definition, '[g]oto [d]efinition')                     -- jump to definition of symbol
+          map('gD', vim.lsp.buf.declaration, '[g]oto [d]eclaration')                   -- jump to declaration of symbol
+          map('gi', vim.lsp.buf.implementation, '[g]oto [i]mplementation')             -- jump to implementation of symbol
+          map('gs', vim.lsp.buf.signature_help, '[g]et [s]ignature')
+          map('ge', vim.diagnostic.open_float, '[g]et [e]rrors')                       -- display error
+          map('K', vim.lsp.buf.hover, 'get [k]nowledge')                               -- display symbol information
 
           -- two autocommands used to highlight references
           -- when cursor is moved, the highlights will be cleared
