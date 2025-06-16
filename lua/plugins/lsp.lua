@@ -62,6 +62,13 @@ return {
         end,
       })
 
+      -- global lsp diagnostic
+      vim.diagnostic.config({
+        virtual_text = true,  -- show inline messages
+        severity_sort = true, -- sort diagnostics by severity
+      })
+
+      -- specific lsp diagnostic
       vim.lsp.config('lua_ls', {
         settings = {
           Lua = {
@@ -76,6 +83,7 @@ return {
         }
       })
 
+      -- specific lsp diagnostic
       vim.lsp.config('rust_analyzer', {
         server = {
           root_dir = function(startpath)
