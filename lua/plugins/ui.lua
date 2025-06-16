@@ -3,17 +3,17 @@ return {
     'romgrk/barbar.nvim',
     lazy = false,
     init = function() vim.g.barbar_auto_setup = false end,
-    opts = {icons = {filetype = {enabled = false, custom_colors = true }}},
+    opts = {icons = {filetype = {enabled = false}}},
     keys = {
-     {'<TAB>', '<CMD>BufferNext<CR>'},                    -- move buffer focus to the right
-     {'<S-TAB>', '<CMD>BufferPrevious<CR>'},              -- move buffer focus to the left
-     {'<Leader><TAB>', '<CMD>BufferMoveNext<CR>'},         -- move buffer tab to the right
-     {'<Leader><S-TAB>', '<CMD>BufferMovePrevious<CR>'},   -- move buffer tab to the left
-     {'<Leader>bb', '<Cmd>BufferOrderByBufferNumber<CR>'}, -- sort buffers by number
-     {'<Leader>bn', '<Cmd>BufferOrderByName<CR>'},         -- sort buffers by name
-     {'<Leader>bd', '<Cmd>BufferOrderByDirectory<CR>'},    -- sort buffers by directory
-     {'<Leader>bl', '<Cmd>BufferOrderByLanguage<CR>'},     -- sort buffers by language
-     {'<Leader>bw', '<Cmd>BufferOrderByWindowNumber<CR>'}  -- sort buffers by window number
+      {'<TAB>', '<CMD>BufferNext<CR>'},                     -- move buffer focus to the right
+      {'<S-TAB>', '<CMD>BufferPrevious<CR>'},               -- move buffer focus to the left
+      {'<Leader><TAB>', '<CMD>BufferMoveNext<CR>'},         -- move buffer tab to the right
+      {'<Leader><S-TAB>', '<CMD>BufferMovePrevious<CR>'},   -- move buffer tab to the left
+      {'<Leader>bb', '<Cmd>BufferOrderByBufferNumber<CR>'}, -- sort buffers by number
+      {'<Leader>bn', '<Cmd>BufferOrderByName<CR>'},         -- sort buffers by name
+      {'<Leader>bd', '<Cmd>BufferOrderByDirectory<CR>'},    -- sort buffers by directory
+      {'<Leader>bl', '<Cmd>BufferOrderByLanguage<CR>'},     -- sort buffers by language
+      {'<Leader>bw', '<Cmd>BufferOrderByWindowNumber<CR>'}  -- sort buffers by window number
     }
   },
   {
@@ -47,3 +47,4 @@ return {
     end,
   },
 }
+

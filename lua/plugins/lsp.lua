@@ -1,9 +1,9 @@
 return {
   {
-    'neovim/nvim-lspconfig',
+    'mason-org/mason-lspconfig.nvim',
     dependencies = {
-      {'williamboman/mason.nvim', config = true},
-      'williamboman/mason-lspconfig.nvim',
+      {'mason-org/mason.nvim', opts = {}, config = function() require('mason').setup() end},
+      'neovim/nvim-lspconfig',
       'hrsh7th/cmp-nvim-lsp',
     },
     config = function()
@@ -11,6 +11,7 @@ return {
         group = vim.api.nvim_create_augroup('plugin-lsp-attach', { clear = true }),
         callback = function(event)
 
+          -- helper
           local map = function(keys, func, desc, mode)
             mode = mode or 'n'
             vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
@@ -23,7 +24,7 @@ return {
           map('gi', vim.lsp.buf.implementation, '[g]oto [i]mplementation')             -- jump to implementation of symbol
           map('gs', vim.lsp.buf.signature_help, '[g]et [s]ignature')
           map('ge', vim.diagnostic.open_float, '[g]et [e]rrors')                       -- display error
-          map('K', vim.lsp.buf.hover, 'get [k]nowledge')                               -- display symbol information
+          map('gK', vim.lsp.buf.hover, '[g]et [k]nowledge')                            -- display symbol information
 
           -- two autocommands used to highlight references
           -- when cursor is moved, the highlights will be cleared
@@ -61,40 +62,29 @@ return {
         end,
       })
 
-      local servers = {
-        rust_analyzer = {
-          server = {
-            root_dir = function(startpath)
-              require('lspconfig').util.root_pattern("Cargo.toml", "rust-project.json")(startpath)
-            end,
-          }
-        },
-        lua_ls = {
-          settings = {
-            Lua = {
-              diagnostics = {
-                globals = { 'vim' },
-                disable = { 'missing-fields' }
-              }
+      vim.lsp.config('lua_ls', {
+        settings = {
+          Lua = {
+            runtime = {
+              version = "LuaJIT",
+            },
+            diagnostics = {
+              globals = { 'vim' },
+              disable = { 'missing-fields' }
             }
           }
         }
-      }
+      })
 
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-      capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
-
-      require('mason').setup()
-
-      require('mason-lspconfig').setup({
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
+      vim.lsp.config('rust_analyzer', {
+        server = {
+          root_dir = function(startpath)
+            require('lspconfig').util.root_pattern("Cargo.toml", "rust-project.json")(startpath)
           end,
         }
       })
+
+      require('mason-lspconfig').setup()
     end,
   },
 }
