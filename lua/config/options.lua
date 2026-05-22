@@ -1,40 +1,66 @@
-local opt = vim.opt                            -- o->options_global
+local opt = vim.opt  -- opt->options_global
 local indent = 2
 
--- Global Options
-opt.mouse = 'nic'                             -- mouse is able to move cursor
-opt.hidden = true                             -- Enable modified buffers in background
-opt.syntax = 'on'                             -- Syntax highlighting
-opt.scrolloff = 4                             -- Lines of context
-opt.smartcase = true                          -- Don't ignore case with capitals
-opt.lazyredraw = true                         -- Lazy redraw of buffer
-opt.ignorecase = true                         -- Ignore case
-opt.sidescrolloff = 8                         -- Columns of context
-opt.shiftround = true                         -- Round indent
-opt.splitbelow = true                         -- Put new windows below current
-opt.splitright = true                         -- Put new windows right of current
-opt.undolevels = 1000                         -- Number of undo levels
-opt.encoding = 'utf-8'                        -- Encode utf-8
-opt.foldlevelstart = 99                       -- Code will not be hidden on entry
-opt.termguicolors = true                      -- True color support
-opt.backspace = 'indent,start,eol'            -- Backspace behaviour
-opt.wildmode = 'longest,list,full'            -- Command-line completion mode
-opt.clipboard = 'unnamedplus'                 -- Clipboard
-opt.completeopt = 'menuone,noinsert,noselect' -- Completion options (for deoplete)
-opt.inccommand = 'nosplit'                    -- Shows the effects of the cmd incrementally
+-- UI & Visuals
+opt.termguicolors = true  -- Enable 24-bit colors
+opt.syntax = 'on'         -- Syntax highlighting
+opt.number = true         -- Line numbers
+opt.cursorline = true     -- Highlight current line
+opt.list = true           -- Show some invisible characters (tabs...)
+opt.showmatch = true      -- Highlight matching brackets
 
--- Buffer-local Options
-opt.expandtab = true                          -- Tabs expanded to spaces
-opt.tabstop = indent                          -- Number of columns tab crosses
-opt.autoindent = true                         -- New lines auto indent
-opt.smartindent = true                        -- Insert indents automatically
-opt.shiftwidth = indent                       -- Size of an indent
-opt.softtabstop = indent                      -- Number of columns tab crosses
+-- Line Wrapping & Navigation
+opt.wrap = false         -- Don't wrap lines
+opt.linebreak = true     -- Wrap lines at convenient points
+opt.scrolloff = 4        -- Keep 4 lines above/below cursor
+opt.sidescrolloff = 8    -- Keep 8 columns left/right of cursor
+opt.smoothscroll = true  -- Smooth scrolling for wrapped/folded lines
 
--- Window-local Options
-opt.list = true                               -- Show some invisible characters (tabs...)
-opt.wrap = false                              -- Disable line wrapping
-opt.number = true                             -- Print line number
-opt.foldmethod = 'expr'                       -- Hide code method
-opt.foldexpr = 'nvim_treesitter#foldexpr()'   -- Hide code using treesitter
+-- Windows & Splits
+opt.splitbelow = true  -- Put new windows below current
+opt.splitright = true  -- Put new windows right of current
 
+-- Indentation & Tabs
+opt.tabstop = indent      -- Tab width
+opt.shiftwidth = indent   -- Indent width
+opt.softtabstop = indent  -- Soft tab stop
+opt.expandtab = true      -- Use spaces instead of tabs
+opt.autoindent = true     -- Copy indent from current line
+opt.smartindent = true    -- Smart auto-indenting
+
+-- Search
+opt.ignorecase = true  -- Case insensitive search
+opt.smartcase = true   -- Case sensitive if uppercase in search
+opt.incsearch = true   -- Show matches as you type
+opt.path:append("**")  -- Include subdirectories in search
+
+-- Command-Line & Completion
+opt.wildmenu = true                                 -- Command-line completion menu
+opt.wildmode = "longest:full,full"                  -- Command-line completion mode
+opt.inccommand = 'nosplit'                          -- Show the effects of commands incrementally (e.g. substitute)
+opt.completeopt = 'menu,menuone,noinsert,noselect'  -- Completion options for menus
+
+-- Code Folding
+opt.foldlevel = 99                          -- Start with all folds open
+opt.foldexpr = 'nvim_treesitter#foldexpr()' -- Hide code using treesitter
+
+-- File Handling & Backups
+opt.backup = false       -- Don't create backup files
+opt.writebackup = false  -- Don't create backup before writing
+opt.swapfile = false     -- Don't create swap files
+opt.undofile = true      -- Persistent undo
+opt.undolevels = 1000    -- Maximum number of changes that can be undone
+opt.autoread = true      -- Auto reload files changed outside vim
+opt.autowrite = true     -- Auto save
+
+-- Editor Behavior & Environment
+opt.encoding = "UTF-8"
+opt.hidden = true                                        -- Allow hidden buffers
+opt.errorbells = false                                   -- No error bells
+opt.autochdir = false                                    -- Don't auto change directory
+opt.iskeyword:append("-")                                -- Treat dash as part of word
+opt.selection = "inclusive"                              -- Selection behavior
+opt.virtualedit = "block"                                -- Allow cursor to move where there is no text in visual block mode
+opt.mouse = 'nic'                                        -- Mouse is able to move cursor
+opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"  -- Sync with system clipboard
+opt.modifiable = true                                    -- Allow buffer modifications
